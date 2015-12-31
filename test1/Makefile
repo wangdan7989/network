@@ -1,0 +1,11 @@
+object=test.o
+test:$(object)
+	$(cc) -o test test.o
+test.o:test.c
+	$(cc) -c test.c -L $(lib) -lnetapi  -lnetsnmp   -lnetsnmpagent -lnetsnmphelper  -lnetsnmpmibs -lnetsnmptrapd -lnetsnmp
+clean:
+	-rm test $(object)
+cc=gcc
+lib=/usr/local/lib
+
+

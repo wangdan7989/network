@@ -1,0 +1,4 @@
+lib****.so:netapi   netsnmp   netsnmpagent netsnmphelper  netsnmpmibs netsnmptrapd netsnmp
+
+
+lib***.a:netsnmp   netsnmpagent netsnmphelper  netsnmpmibs netsnmptrapd netsnmp

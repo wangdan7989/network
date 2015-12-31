@@ -1,0 +1,7 @@
+lib****.so:netapi   netsnmp   netsnmpagent netsnmphelper  netsnmpmibs netsnmptrapd netsnmp
+
+
+lib***.a:netsnmp   netsnmpagent netsnmphelper  netsnmpmibs netsnmptrapd netsnmp
+
+snmplib   在/usr/lib中
+net-snmp 在/usr/local/include
