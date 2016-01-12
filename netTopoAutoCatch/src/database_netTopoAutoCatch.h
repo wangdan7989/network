@@ -1,6 +1,6 @@
 
-#include<mysql.h>
-/*#include "/usr/include/mysql/mysql.h" */
+/*#include<mysql.h>*/
+#include "/usr/include/mysql/mysql.h" 
 
 #define DATABASE_DEBUG_MESSAGE
 #undef DATABASE_DEBUG_MESSAGE
@@ -10,8 +10,8 @@
 #define DB_CONF_FILE_H
 #define DB_IPADDR "192.168.200.2"
 #define DB_USER   "root"
-#define DB_PASSWORD "123456"
-#define DB_NAME   "netTopoAutoCatch"
+#define DB_PASSWORD "123"
+#define DB_NAME   "netdata"
 #endif
 
 #ifndef DATABASE_RETURN_H

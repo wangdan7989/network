@@ -1,0 +1,122 @@
+#include "./common/my_snmp_bulkwalk.h"
+#include <stdio.h>
+
+
+int main(int argc, char *argv[]) {
+	
+	//char *peername = NULL;
+	//char *oid_name = NULL;
+	//char *community = NULL;
+	
+	char *peername = "192.168.200.253";
+	char *oid_name=".1.3.6.1.4.1.2011.5.25.123.1.17.1";
+	//char *oid_name="sysName.0";
+	char *community="P@ssw0rd";
+
+	unsigned int count = 0;
+	my_oid_result *oid_results;
+	oid_results =  (struct my_oid_result *)malloc(sizeof(struct my_oid_result) * 1024 * 16);
+	
+	unsigned int oid_results_nums =0;	
+	
+	//peername  = argv[1];
+	//community = argv[2];
+	//oid_name  = argv[3];
+	int ral = my_snmp_bulkwalk(peername, community, oid_name, oid_results, &oid_results_nums);
+	
+	unsigned int oids_count = 0;
+	
+	if(ral == 0) {
+
+		for(oids_count=0; oids_count < oid_results_nums; oids_count++) {
+			if(oid_results[oids_count].type == SNMP_NOSUCHOBJECT) {
+				printf("[main] No Such Object available on this agent at this OID\n");
+			}
+	
+			if(oid_results[oids_count].type == SNMP_NOSUCHINSTANCE) {
+				printf("[main] No Such Instance currently exists at this OID\n");
+			}
+	
+
+			unsigned int oid_count_len;
+			for(oid_count_len = 0; oid_count_len < oid_results[oids_count].oid_name_length; oid_count_len++) {
+				printf(".%ld", oid_results[oids_count].oid_name[oid_count_len]);
+			}
+			printf(": ");
+
+			
+			
+			if(oid_results[oids_count].type == SNMP_ENDOFMIBVIEW) {
+				printf("[main] No more variables left in this MIB View (It is past the end of the MIB tree)\n");
+			}
+
+			if(oid_results[oids_count].type == ASN_OCTET_STR || oid_results[oids_count].type == ASN_BIT_STR) {
+				
+				int hex = 0, x;
+				char *cp;
+				for (cp = oid_results[oids_count].val.string, x = 0; x < (int)oid_results[oids_count].val_len; x++, cp++) {
+					if (!isprint(*cp) && !isspace(*cp)) {
+						hex = 1;
+					}
+				}
+				
+				if(!hex) {
+					printf("%s\n", oid_results[oids_count].val.string);
+				} else {
+					for(count=0; count<(int)oid_results[oids_count].val_len; count++) {
+						printf("%x:", oid_results[oids_count].val.string[count]);
+					}
+					printf("\n");
+				}
+			}
+			
+			if(oid_results[oids_count].type == ASN_INTEGER) {
+				printf("%ld\n", oid_results[oids_count].val.integer);
+			}
+			
+			if(oid_results[oids_count].type == ASN_UINTEGER) {
+				printf("%lu\n", oid_results[oids_count].val.integer);
+			}
+			
+			if(oid_results[oids_count].type == ASN_OBJECT_ID) {
+				for(count=0; count<oid_results[oids_count].objid_length; count++) {
+					printf("%d", oid_results[oids_count].val.objid[count]);
+					count < (oid_results[oids_count].objid_length-1) ? printf(".") : printf("\n");
+				}
+			}
+			
+			if( oid_results[oids_count].type == ASN_TIMETICKS || 
+				oid_results[oids_count].type == ASN_GAUGE || 
+				oid_results[oids_count].type == ASN_COUNTER ) {
+				printf("%lu\n", oid_results[oids_count].val.integer);
+			}
+			
+			if(oid_results[oids_count].type == ASN_OPAQUE_FLOAT) {
+				printf("%f\n", oid_results[oids_count].val.floatVal);
+			}
+			
+			if(oid_results[oids_count].type == ASN_OPAQUE_DOUBLE) {
+				printf("%f\n", oid_results[oids_count].val.doubleVal);
+			}
+			
+			if (oid_results[oids_count].type == ASN_OPAQUE_COUNTER64 || 
+				oid_results[oids_count].type == ASN_OPAQUE_U64 || 
+				oid_results[oids_count].type == ASN_COUNTER64 || 
+				oid_results[oids_count].type == ASN_OPAQUE_I64 ) {
+				printf("%s\n", oid_results[oids_count].val.string);
+			}
+			
+			if(oid_results[oids_count].type == ASN_IPADDRESS) {
+				printf("%d.%d.%d.%d\n", 
+						oid_results[oids_count].val.string[0], 
+						oid_results[oids_count].val.string[1],
+						oid_results[oids_count].val.string[2],
+						oid_results[oids_count].val.string[3] 
+				);
+			}
+		}
+	}
+	printf("[main] walk %d oids values\n", oid_results_nums);
+	return 0;
+}
+

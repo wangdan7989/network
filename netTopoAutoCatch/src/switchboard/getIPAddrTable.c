@@ -103,7 +103,7 @@ int get_ip_addr_table_info_from_device_by_snmp(const unsigned char *ip,
 }
 
 
-/*
+
 int main(int argc, char *argv[]) {
 	
 	if(argc < 3) {
@@ -125,6 +125,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	printf("entip           entifindex      entmask\n");
+	printf("num:%d\n",num);
+	
+
 	for(count = 0; count < num; count++) {
 		printf("%-16s%-16d%-16s\n", ip_addr_table_info[count].ipAddrTableEntIp,
 									 ip_addr_table_info[count].ipAddrTableEntIfIndex,
@@ -133,4 +136,4 @@ int main(int argc, char *argv[]) {
 	
 	return 0;
 }
-*/
+

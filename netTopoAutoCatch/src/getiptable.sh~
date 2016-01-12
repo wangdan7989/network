@@ -1,0 +1,1 @@
+gcc getIPAddrTable.c -o getiptab -I ./netsnmp/include/net-snmp -L /usr/lib/netsnmp -lnetsnmp 

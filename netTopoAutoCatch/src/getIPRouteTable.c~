@@ -22,7 +22,7 @@ int get_ip_route_table_info_from_device_by_snmp(const unsigned char *ip,
 	oid_results = (struct my_oid_result *)malloc(sizeof(struct my_oid_result) * MAX_MY_OID_RESULT_LEN);
 	
 	memset(oid_results, 0, sizeof(struct my_oid_result) * MAX_MY_OID_RESULT_LEN);
-
+	//void *memset(void *s,int c,size_t n)：将已开辟内存空间 s 的首 n 个字节的值设为值 c。
 	
 	/* get the IP route table destination */
 	if(my_snmp_bulkwalk(ip, comm, IP_ROUTE_TABLE_DEST, oid_results, &oid_results_nums) == 0) {

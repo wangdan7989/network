@@ -186,9 +186,9 @@ int network_topo_auto_catch(const unsigned char *initIP, const unsigned int init
 			pCurrentRouter->processFlag = DONE_ROUTER_FLAG;
 			continue;
 		}
-	/*	
+		
 		printf("router name: %s\n", pCurrentRouter->routerName);
-	*/
+	
 
 
 		/* get the router ipForWardingFlag value */
@@ -213,14 +213,14 @@ int network_topo_auto_catch(const unsigned char *initIP, const unsigned int init
 			continue;
 		}
 	
-	/*	
+		
 		printf("entip           entifindex      entmask\n");
 		for(count = 0; count < pRouterQueue[curPosition]->ipAddrTableNum; count++) {
 			printf("%-16s%-16d%-16s\n", pRouterQueue[curPosition]->ipAddrTable[count].ipAddrTableEntIp,
 									    pRouterQueue[curPosition]->ipAddrTable[count].ipAddrTableEntIfIndex,
 									    pRouterQueue[curPosition]->ipAddrTable[count].ipAddrTableEntMask);
 		}
-	*/
+	
 
 
 		/* get the router ip router table info by snmp */

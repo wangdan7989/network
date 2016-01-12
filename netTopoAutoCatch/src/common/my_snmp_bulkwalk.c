@@ -291,7 +291,7 @@ int my_snmp_bulkwalk(const char *peername,
 }
 
 
-
+/*
 int main(int argc, char *argv[]) {
 	
 	//char *peername = NULL;
@@ -299,13 +299,12 @@ int main(int argc, char *argv[]) {
 	//char *community = NULL;
 	
 	char *peername = "127.0.0.1";
-	char *oid_name=".1.3.6.1.2.1.1";
+	char *oid_name=".1.3.6.1.2.1";
 	//char *oid_name="sysName.0";
 	char *community="public";
 
 	unsigned int count = 0;
 	my_oid_result *oid_results;
-	printf("peername:%s \n",peername);
 	oid_results =  (struct my_oid_result *)malloc(sizeof(struct my_oid_result) * 1024 * 16);
 	
 	unsigned int oid_results_nums =0;	
@@ -313,7 +312,6 @@ int main(int argc, char *argv[]) {
 	//peername  = argv[1];
 	//community = argv[2];
 	//oid_name  = argv[3];
-	printf(" oid_name:%s\n",oid_name);
 	int ral = my_snmp_bulkwalk(peername, community, oid_name, oid_results, &oid_results_nums);
 	
 	unsigned int oids_count = 0;
@@ -411,4 +409,4 @@ int main(int argc, char *argv[]) {
 	printf("[main] walk %d oids values\n", oid_results_nums);
 	return 0;
 }
-
+*/

@@ -1,0 +1,12 @@
+object=gethwArpDynTable.o
+gethwArpDynTable:$(object)
+	$(cc) -o gethwArpDynTable gethwArpDynTable.o -I $(include1) -I $(include2) -L $(lib) -lnetsnmp -lbulkwalk
+gethwArpDynTable.o:gethwArpDynTable.c 
+	$(cc) -c gethwArpDynTable.c  -I $(include1) -I $(include2) -L $(lib) -lnetsnmp -lbulkwalk
+
+clean:
+	-rm gethwArpDynTable $(object)
+cc=gcc
+lib=/usr/lib/netsnmp
+include1=/usr/local/net-snmp/include/net-snmp
+
