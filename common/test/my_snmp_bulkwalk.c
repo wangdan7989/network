@@ -360,6 +360,7 @@ int main(int argc, char *argv[]) {
 				}
 				
 				if(!hex) {
+					
 					printf("%s\n", oid_results[oids_count].val.string);
 				} else {
 					for(count=0; count<(int)oid_results[oids_count].val_len; count++) {

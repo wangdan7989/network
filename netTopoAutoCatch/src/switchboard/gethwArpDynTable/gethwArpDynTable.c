@@ -20,6 +20,8 @@ int get_ArpDyn_table_info_from_device_by_snmp(const unsigned char *ip,
 	unsigned int ip_arpdyn_table_nums = 0;
 	unsigned char tmp[8];
 	unsigned char str[32];
+	unsigned char mtmp[12];
+	unsigned char mstr[40];
 	*ip_arpdyn_table_rows = 0;
 	my_oid_result *oid_results = NULL;
 	oid_results = (struct my_oid_result *)malloc(sizeof(struct my_oid_result) * MAX_MY_OID_RESULT_LEN);
@@ -56,12 +58,14 @@ int get_ArpDyn_table_info_from_device_by_snmp(const unsigned char *ip,
 			memset(str, 0, 32);					
 			memset(tmp, 0, 8);
 			for(ip_count= len-6; ip_count < len-2; ip_count++){
-			snprintf(tmp, 8, "%d", oid_results[count].oid_name[ip_count]);
+				snprintf(tmp, 8, "%d", oid_results[count].oid_name[ip_count]);
 				strncat(str, tmp, 32);
 				if(ip_count < len-3) {
 					strncat(str, ".", 32);
 				}				
 			//	printf("%ld.", oid_results[count].oid_name[ip_count]);
+
+			//	printf("tmp:%s\n",tmp);
 			}
 			//printf("src:%s\n",str);
 			strncpy(ip_arpdyn_table_info[ip_arpdyn_table_nums].hwArpDynIpAdd, str, 15);
@@ -74,27 +78,46 @@ int get_ArpDyn_table_info_from_device_by_snmp(const unsigned char *ip,
 	/* get the MAC addr table entity ip */
 	if(my_snmp_bulkwalk(ip, comm, Arp_Dyn_MacAdd, oid_results, &oid_results_nums) == 0) {
 		ip_arpdyn_table_nums = 0;
+		unsigned int cou=0;
+		
 		for(count = 0; count < oid_results_nums; count++) {
-			memset(str, 0, 32);
-			if(oid_results[count].type == ASN_STRING) {
-			  //if(1){
+			memset(mstr, 0, 40);					
+			memset(tmp, 0, 8);
+			if(oid_results[count].type == ASN_OCTET_STR || oid_results[count].type == ASN_BIT_STR) {
 				//printf("%16c\n",oid_results[count].type);
-				for(ip_count = 0; ip_count < 4; ip_count++) {
-					memset(tmp, 0, 8);
-					snprintf(tmp, 8, "%d", oid_results[count].val.string[ip_count]);
-					strncat(str, tmp, 32);
-					if(ip_count < 3) {
-						strncat(str, ".", 32);
+
+				int hex = 0, x;
+				char *cp;
+				for (cp = oid_results[count].val.string, x = 0; x < (int)oid_results[count].val_len; x++, cp++) {
+					if (!isprint(*cp) && !isspace(*cp)) {
+						hex = 1;
 					}
 				}
-				strncpy(ip_arpdyn_table_info[ip_arpdyn_table_nums++].ipAddrTableEntMask, str, 15);
-			} else {
-				printf("[ERROR] call my_snmp_bulkwalk function to get IP address table entity IP type is error\n");
-				free(oid_results);
-				return 1;
+				
+				if(!hex) {
+					
+					printf("%s\n", oid_results[count].val.string);
+				} else {
+					for(cou=0; cou<(int)oid_results[count].val_len; cou++) {
+						memset(tmp, 0, 8);
+						snprintf(tmp, 8, "%x", oid_results[count].val.string[cou]);
+						
+						strncat(mstr, tmp, 40);
+						if(cou < 5) {
+							strncat(mstr, ":", 40);
+						}
+						//printf("%x:", oid_results[count].val.string[cou]);
+						
+					}
+					
+					strncpy(ip_arpdyn_table_info[ip_arpdyn_table_nums++].ipAddrTableEntMask, mstr, 19);
+					//printf("\n");
+				}
+
 			}
 		}
-	} else {
+	}
+	else {
 		printf("[ERROR] call my_snmp_bulkwalk function return is wrong for get IP address table entity IP\n");
 		free(oid_results);
 		return 1;
@@ -158,33 +181,13 @@ int main(int argc, char *argv[]) {
 	IP_ArpDyn_TABLE_INFO *ip_arpdyn_table_info = NULL;
 	unsigned int num = 0;
 	unsigned int count = 0;
+
 	ip_arpdyn_table_info = (IP_ArpDyn_TABLE_INFO *)malloc(sizeof(IP_ArpDyn_TABLE_INFO) * MAX_MY_OID_RESULT_LEN);
 	memset(ip_arpdyn_table_info, 0, sizeof(IP_ArpDyn_TABLE_INFO) * MAX_MY_OID_RESULT_LEN);
 
-/*	
-	unsigned int ret = get_ArpDyn_table_info_from_device_by_snmp(*peername, *community, ip_arpdyn_table_info, &num);
-	
-
-	if(ret != 0) {
-		printf("[ERROR] call get_ip_addr_table_info_from_device_by_snmp error\n");
-		return 1;
-	}
-
-	//printf("entip           entifindex      entmask\n");
-	//printf("num:%d\n",num);
-	
-
-	//for(count = 0; count < num; count++) {
-	//	printf("%-16s%-16d%-16s\n", ip_addr_table_info[count].ipAddrTableEntIp,
-									// ip_addr_table_info[count].ipAddrTableEntIfIndex,
-									// ip_addr_table_info[count].ipAddrTableEntMask);
-	//}
-	
-	return 0;
-*/
 	char *ip = "192.168.200.253";
 	char *comm = "P@ssw0rd";
-	//unsigned int ret=get_IP_ADDR_info(ip,comm,ip_arpdyn_table_info, &num);
+	
 	unsigned int ret=get_ArpDyn_table_info_from_device_by_snmp(ip,comm,ip_arpdyn_table_info, &num);
 	printf("ret:%d\n",ret);
 	printf("num:%d\n",num);

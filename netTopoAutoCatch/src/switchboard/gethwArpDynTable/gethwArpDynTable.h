@@ -14,7 +14,7 @@ typedef struct IP_ArpDyn_TABLE_INFO {
 	unsigned char hwArpDynIpAdd[16];
 	unsigned char ipAddrTableEntMask[16];
 	unsigned long hwArpDynVrf;
-	unsigned char hwArpDynMacAdd[16];
+	unsigned char hwArpDynMacAdd[20];
 }IP_ArpDyn_TABLE_INFO;
 #endif
 

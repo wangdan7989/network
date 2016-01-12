@@ -22,7 +22,7 @@ typedef struct IP_ArpDyn_TABLE_INFO {
 #define		MAX_MY_OID_RESULT_LEN		32
 #endif
 
-int get_hwArpDyn_table_info_from_device_by_snmp(const unsigned char *ip, 
+int get_ArpDyn_table_info_from_device_by_snmp(const unsigned char *ip, 
 											   const unsigned char *comm,
 											   IP_ArpDyn_TABLE_INFO *ip_arpdyn_table_info,
 											   unsigned int *ip_arpdyn_table_rows);
