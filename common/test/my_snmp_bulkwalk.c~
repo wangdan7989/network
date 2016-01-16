@@ -361,17 +361,17 @@ int main(int argc, char *argv[]) {
 				
 				if(!hex) {
 					
-					printf("sssss:%s\n", oid_results[oids_count].val.string);
+					printf("%s\n", oid_results[oids_count].val.string);
 				} else {
 					for(count=0; count<(int)oid_results[oids_count].val_len; count++) {
-						printf("xxxxx:%x:", oid_results[oids_count].val.string[count]);
+						printf("%x:", oid_results[oids_count].val.string[count]);
 					}
 					printf("\n");
 				}
 			}
 			
 			if(oid_results[oids_count].type == ASN_INTEGER) {
-				printf("%ld\n", oid_results[oids_count].val.integer);
+				printf("aaa%ld\n", oid_results[oids_count].val.integer);
 			}
 			
 			if(oid_results[oids_count].type == ASN_UINTEGER) {

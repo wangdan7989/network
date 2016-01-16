@@ -12,9 +12,14 @@
 typedef struct IP_ArpDyn_TABLE_INFO {
 	unsigned long hwArpDynIfIndex;
 	unsigned char hwArpDynIpAdd[16];
-	unsigned char ipAddrTableEntMask[16];
-	unsigned long hwArpDynVrf;
 	unsigned char hwArpDynMacAdd[20];
+	unsigned long hwArpDynVrf;
+	unsigned long  hwArpDynVlanId;
+	unsigned long  hwArpDynOutIfIndex;
+	unsigned long  hwArpDynExpireTime;
+
+	
+	
 }IP_ArpDyn_TABLE_INFO;
 #endif
 
