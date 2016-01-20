@@ -17,11 +17,17 @@
 
 #define PASSWORD                   "P@ssw0rd"
 
+#ifndef FLAG
+#define FLAG
+typedef int Flag;
+#endif
+
 #ifndef Host_INFO_H
 #define Host_INFO_H
 typedef struct Host_INFO_H {
-	unsigned char ArpDynIpAdd[16];
-	unsigned char ArpDynMacAdd[20];
+	unsigned int index;
+	unsigned char *ArpDynIpAdd;
+	unsigned char *ArpDynMacAdd;
 
 } HOST_INFO;
 #endif

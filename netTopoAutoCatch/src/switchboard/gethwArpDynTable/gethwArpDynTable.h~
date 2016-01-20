@@ -10,13 +10,13 @@
 #ifndef	IP_ArpDyn_TABLE_INFO_DEFINE
 #define IP_ArpDyn_TABLE_INFO_DEFINE
 typedef struct IP_ArpDyn_TABLE_INFO {
-	unsigned long hwArpDynIfIndex;
-	unsigned char hwArpDynIpAdd[16];
-	unsigned char hwArpDynMacAdd[20];
-	unsigned long hwArpDynVrf;
-	unsigned long  hwArpDynVlanId;
-	unsigned long  hwArpDynOutIfIndex;
-	unsigned long  hwArpDynExpireTime;
+	unsigned long ArpDynIfIndex;
+	unsigned char ArpDynIpAdd[16];
+	unsigned char ArpDynMacAdd[20];
+	unsigned long ArpDynVrf;
+	unsigned long  ArpDynVlanId;
+	unsigned long  ArpDynOutIfIndex;
+	unsigned long  ArpDynExpireTime;
 
 	
 	

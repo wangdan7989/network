@@ -96,11 +96,11 @@ Status Update_Switch_info_char(MYSQL *my_connection, unsigned int SwitchId , cha
 
 
 /* ---------------------------------------------------------- */
-/*                ArpDyn_Table   functions                    */
+/*                Basic_Check_Pool_Info_Table   functions                    */
 /* ---------------------------------------------------------- */
 
 
-/*Insert information into hwArpDynTable*/
+/*Insert information into Basic_Check_Pool_Info_Table*/
 Status Basic_Check_Pool_Info_Table_Insert(MYSQL *my_connection,SwitchId SwitchId,unsigned int ArpDynIfIndex,
 					char *ArpDynIpAdd,unsigned int ArpDynVrf,char *ArpDynMacAdd,
 						unsigned int ArpDynVlanId,unsigned int ArpDynOutIfInd,unsigned int ArpDynExpireTime);

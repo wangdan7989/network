@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define SWITCH_ID0 0
 #define SWITCH_ID1 1
@@ -17,9 +18,15 @@
 
 #define PASSWORD                   "P@ssw0rd"
 
+#ifndef FLAG
+#define FLAG
+typedef int Flag;
+#endif
+
 #ifndef Host_INFO_H
 #define Host_INFO_H
 typedef struct Host_INFO_H {
+	unsigned int index;
 	unsigned char *ArpDynIpAdd;
 	unsigned char *ArpDynMacAdd;
 

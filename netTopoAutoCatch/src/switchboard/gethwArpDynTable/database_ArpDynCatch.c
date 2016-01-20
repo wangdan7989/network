@@ -218,7 +218,7 @@ Status Update_Switch_info_char(MYSQL *my_connection, unsigned int SwitchId , cha
 /* ---------------------------------------------------------- */
 /*                Basic_Check_Pool   functions                    */
 /* ---------------------------------------------------------- */
-/*Insert information into hwArpDynTable*/
+/*Insert information into Basic_Check_Pool_Info_Table*/
 Status Basic_Check_Pool_Info_Table_Insert(MYSQL *my_connection,SwitchId SwitchId,unsigned int ArpDynIfIndex,
 					char *ArpDynIpAdd,unsigned int ArpDynVrf,char *ArpDynMacAdd,
 						unsigned int ArpDynVlanId,unsigned int ArpDynOutIfIndex,unsigned int ArpDynExpireTime){
@@ -260,7 +260,6 @@ Status Get_Basic_Check_Pool_Info(MYSQL *my_connection,ArpDynTable_INFO *arpdynta
 	sprintf(sqlbuff,"select SwitchId,ArpDynIfIndex,ArpDynIpAdd,ArpDynMacAdd,ArpDynVrf,ArpDynVlanId,ArpDynOutIfIndex,ArpDynExpireTime from Basic_Check_Pool where SwitchId=%d",SwitchId);
 	
 	res=mysql_query(my_connection,sqlbuff);
-	printf("res:%d\n",res);
 	if(res)
 	{
 #ifdef DATABASE_DEBUG_MESSAGE

@@ -10,6 +10,7 @@
 #ifndef	IP_ArpDyn_TABLE_INFO_DEFINE
 #define IP_ArpDyn_TABLE_INFO_DEFINE
 typedef struct IP_ArpDyn_TABLE_INFO {
+	unsigned int SwitchId;
 	unsigned long ArpDynIfIndex;
 	unsigned char ArpDynIpAdd[16];
 	unsigned char ArpDynMacAdd[20];

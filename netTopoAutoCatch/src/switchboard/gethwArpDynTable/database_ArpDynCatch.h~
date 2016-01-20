@@ -96,21 +96,21 @@ Status Update_Switch_info_char(MYSQL *my_connection, unsigned int SwitchId , cha
 
 
 /* ---------------------------------------------------------- */
-/*                ArpDyn_Table   functions                    */
+/*                Basic_Check_Pool_Info_Table   functions                    */
 /* ---------------------------------------------------------- */
 
 
-/*Insert information into hwArpDynTable*/
-Status ArpDyn_Info_Table_Insert(MYSQL *my_connection,SwitchId SwitchId,unsigned int ArpDynIfIndex,
+/*Insert information into Basic_Check_Pool_Info_Table*/
+Status Basic_Check_Pool_Info_Table_Insert(MYSQL *my_connection,SwitchId SwitchId,unsigned int ArpDynIfIndex,
 					char *ArpDynIpAdd,unsigned int ArpDynVrf,char *ArpDynMacAdd,
 						unsigned int ArpDynVlanId,unsigned int ArpDynOutIfInd,unsigned int ArpDynExpireTime);
 
-/* Functions:  Get ArpDynTable_Info */
-Status Get_ArpDynTable_Info(MYSQL *my_connection,ArpDynTable_INFO *arpdyntable_info, unsigned int *arpdyntable_info_nums, 
+/* Functions:  Get Basic_Check_Pool_Info */
+Status Get_Basic_Check_Pool_Info(MYSQL *my_connection,ArpDynTable_INFO *arpdyntable_info, unsigned int *arpdyntable_info_nums, 
 					const unsigned int SwitchId);
 
-/* delete in the ArpDyn table where SwitchId = ? */
-Status Delete_ArpDyn_Table_By_SwitchId(MYSQL *my_connection,const int SwitchId);
+/* delete in the Basic_Check_Pool table where SwitchId = ? */
+Status Delete_Basic_Check_Pool_Table_By_SwitchId(MYSQL *my_connection,const int SwitchId);
 
 /*******************Get_SwitchId_bySwitchIP****************/
 Status Get_SwitchId_bySwitchIP(MYSQL *my_connect,const unsigned int SwitchId,const char *IpAddr);
