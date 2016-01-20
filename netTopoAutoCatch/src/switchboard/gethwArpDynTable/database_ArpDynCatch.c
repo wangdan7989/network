@@ -102,83 +102,15 @@ Status Switch_Info_Table_Insert(MYSQL *my_connection,SwitchId SwitchId,char *IpA
 }
 
 
-
-/*Insert information into hwArpDynTable*/
-Status ArpDyn_Info_Table_Insert(MYSQL *my_connection,SwitchId SwitchId,unsigned int ArpDynIfIndex,
-					char *ArpDynIpAdd,unsigned int ArpDynVrf,char *ArpDynMacAdd,
-						unsigned int ArpDynVlanId,unsigned int ArpDynOutIfInd,unsigned int ArpDynExpireTime){
-	
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-
-	
-	sprintf(sqlbuff,"insert into hwArpDynTable(SwitchId,ArpDynIfIndex,ArpDynIpAdd,ArpDynVrf,ArpDynMacAdd,ArpDynVlanId,ArpDynOutIfInd,ArpDynExpireTime) values(%d,%d,'%s',%d,'%s',%d,%d,%d)",SwitchId,ArpDynIfIndex,ArpDynIpAdd,ArpDynVrf,ArpDynMacAdd,ArpDynVlanId,ArpDynOutIfInd,ArpDynExpireTime);
-
-	res=mysql_query(my_connection,sqlbuff);
-	if(!res)
-	{
-#ifdef DATABASE_DEBUG_MESSAGE
-		printf("[DEBUG] database_netTopoAutoCatch: Insert %lu rows\n",(unsigned long)mysql_affected_rows(my_connection));
-#endif
-		return DATABASE_OK;
-	}
-	else
-	{
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_netTopoAutoCatch: Insert error %d: %s\n",mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-		return DATABASE_ERROR;
-	}
-
-}
-
-
-
-/* ---------------------------------------------------------- */
-/*                Router_Table   functions                    */
-/* ---------------------------------------------------------- */
-
-
-/*Insert information into Router table*/
-
-Status Router_Info_Table_Insert(MYSQL *my_connection, RouterID RouterID, char *RouterName, 
-								char *FlagIpAddr, unsigned int IpAddrTableNum, unsigned int SubnetVectorNum )
-{
-
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-
-	
-	sprintf(sqlbuff,"insert into Router(RouterID,RouterName,FlagIpAddr,IpAddrTableNum,SubnetVectorNum) values(%d,'%s','%s',%d,%d)",RouterID,RouterName,FlagIpAddr,IpAddrTableNum,SubnetVectorNum);
-
-	res=mysql_query(my_connection,sqlbuff);
-	if(!res)
-	{
-#ifdef DATABASE_DEBUG_MESSAGE
-		printf("[DEBUG] database_netTopoAutoCatch: Insert %lu rows\n",(unsigned long)mysql_affected_rows(my_connection));
-#endif
-		return DATABASE_OK;
-	}
-	else
-	{
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_netTopoAutoCatch: Insert error %d: %s\n",mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-		return DATABASE_ERROR;
-	}
-	
-}
-
-/* Functions:  Get RouterInfo */
-Status Get_Router_Info(MYSQL *my_connection,ROUTER_INFO *router_info, unsigned int *router_info_nums, const unsigned int RouterID)
-
+/* Functions:  Get SwitchInfo */
+Status Get_Switch_Info(MYSQL *my_connection,SWITCH_INFO *switch_info, unsigned int *switch_info_nums, const unsigned char *SwitchIpAddr)
 {
 	MYSQL_RES *res_ptr;
 	MYSQL_ROW sqlrow;
 	int count=0;
 	int res,j;
 	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"select RouterID,RouterName,FlagIpAddr,IpAddrTableNum,SubnetVectorNum from Router where RouterID=%d",RouterID);
+	sprintf(sqlbuff,"select SwitchId,IpAddr from SwitchInfoTable where IpAddr='%s'",SwitchIpAddr);
 	res=mysql_query(my_connection,sqlbuff);
 	if(res)
 	{
@@ -195,7 +127,7 @@ Status Get_Router_Info(MYSQL *my_connection,ROUTER_INFO *router_info, unsigned i
 #ifdef DATABASE_DEBUG_MESSAGE
 			printf("[DEBUG] database_public: Retrieved %lu rows\n",(unsigned long)mysql_num_rows(res_ptr));
 #endif
-			*router_info_nums=(unsigned int)mysql_num_rows(res_ptr);
+			*switch_info_nums=(unsigned int)mysql_num_rows(res_ptr);
 
 
 			while((sqlrow=mysql_fetch_row(res_ptr)))
@@ -204,14 +136,10 @@ Status Get_Router_Info(MYSQL *my_connection,ROUTER_INFO *router_info, unsigned i
 				printf("[DEBUG] database_public: Fetched data...\n");
 #endif
 
-				router_info[count].routerID=atoi(sqlrow[0]);
+				switch_info[count].SwitchId=atoi(sqlrow[0]);
 				
-				router_info[count].routerName = (char*)malloc(sizeof(char) *64);
-				strcpy(router_info[count].routerName,sqlrow[1]);
-				router_info[count].flagIpAddr = (char*)malloc(sizeof(char) *16);
-				strcpy(router_info[count].flagIpAddr,sqlrow[2]);
-				router_info[count].ipAddrTableNum = atoi(sqlrow[3]);
-				router_info[count].subnetVectorNum= atoi(sqlrow[4]);
+				switch_info[count].IpAddr = (char*)malloc(sizeof(char) *16);
+				strcpy(switch_info[count].IpAddr,sqlrow[1]);
 				
 				count++;
 				
@@ -230,12 +158,11 @@ Status Get_Router_Info(MYSQL *my_connection,ROUTER_INFO *router_info, unsigned i
 	}
 }
 
-
-/* delete in the Router table where RouterID = ? */
-Status Delete_Router_Table_By_RouterID(MYSQL *my_connection,const int RouterID) {
+/* delete in the Switch table where SwitchId = ? */
+Status Delete_Switch_Table_By_SwitchId(MYSQL *my_connection,const int SwitchId) {
 	int res;
 	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"delete from Router where RouterID = %d", RouterID);
+	sprintf(sqlbuff,"delete from SwitchInfoTable where SwitchId = %d", SwitchId);
 	res = mysql_query(my_connection, sqlbuff);                                                                                                                  
 	if(!res) {
 #ifdef DATABASE_DEBUG_MESSAGE
@@ -249,11 +176,11 @@ Status Delete_Router_Table_By_RouterID(MYSQL *my_connection,const int RouterID) 
 		return DATABASE_ERROR;
 	}
 }
-/*update Router Table (int)*/
-Status Update_Router_info_int(MYSQL *my_connection, unsigned int RouterID , char *Rowname,unsigned int value) {
+/*update Switch Table (int)*/
+Status Update_Switch_info_int(MYSQL *my_connection, unsigned int SwitchId , char *Rowname,unsigned int value) {
 	int res;
 	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"update Router set %s = '%d' where RouterID = '%d'", Rowname, value, RouterID);
+	sprintf(sqlbuff,"update Router set %s = '%d' where RouterID = '%d'", Rowname, value, SwitchId);
 	res = mysql_query(my_connection,sqlbuff);                                                                                                                  
 	if(!res) {
 #ifdef DATABASE_DEBUG_MESSAGE
@@ -269,10 +196,10 @@ Status Update_Router_info_int(MYSQL *my_connection, unsigned int RouterID , char
 
 }
 /*update Router Table (char)*/
-Status Update_Router_info_char(MYSQL *my_connection, unsigned int RouterID , char *Rowname,char *value) {
+Status Update_Switch_info_char(MYSQL *my_connection, unsigned int SwitchId , char *Rowname,char *value) {
 	int res;
 	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"update Router set %s = '%s' where RouterID = '%d'", Rowname, value, RouterID);
+	sprintf(sqlbuff,"update SwitchInfoTable set %s = '%s' where SwitchId = '%d'", Rowname, value, SwitchId);
 	res = mysql_query(my_connection,sqlbuff);                                                                                                                  
 	if(!res) {
 #ifdef DATABASE_DEBUG_MESSAGE
@@ -288,19 +215,20 @@ Status Update_Router_info_char(MYSQL *my_connection, unsigned int RouterID , cha
 
 }
 
-
 /* ---------------------------------------------------------- */
-/*              IpAddrTable_Table   functions                 */
+/*                Basic_Check_Pool   functions                    */
 /* ---------------------------------------------------------- */
-
-/*Insert information into IpAddrTable table*/
-Status IpAddrTable_Info_Table_Insert(MYSQL *my_connection, RouterID RouterID, unsigned int IpAddrTableEntIfIndex, char *IpAddrTableEntIp, 
-								char *IpAddrTableEntMask )
-{
-
+/*Insert information into hwArpDynTable*/
+Status Basic_Check_Pool_Info_Table_Insert(MYSQL *my_connection,SwitchId SwitchId,unsigned int ArpDynIfIndex,
+					char *ArpDynIpAdd,unsigned int ArpDynVrf,char *ArpDynMacAdd,
+						unsigned int ArpDynVlanId,unsigned int ArpDynOutIfIndex,unsigned int ArpDynExpireTime){
+	
 	int res;
 	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"insert into IpAddrTable(RouterID,IpAddrTableEntIfIndex,IpAddrTableEntIp,IpAddrTableEntMask) values(%d,%d,'%s','%s')",RouterID,IpAddrTableEntIfIndex,IpAddrTableEntIp,IpAddrTableEntMask);
+
+	
+	sprintf(sqlbuff,"insert into Basic_Check_Pool(SwitchId,ArpDynIfIndex,ArpDynIpAdd,ArpDynVrf,ArpDynMacAdd,ArpDynVlanId,ArpDynOutIfIndex,ArpDynExpireTime) values(%d,%d,'%s',%d,'%s',%d,%d,%d)",SwitchId,ArpDynIfIndex,ArpDynIpAdd,ArpDynVrf,ArpDynMacAdd,ArpDynVlanId,ArpDynOutIfIndex,ArpDynExpireTime);
+
 	res=mysql_query(my_connection,sqlbuff);
 	if(!res)
 	{
@@ -316,20 +244,23 @@ Status IpAddrTable_Info_Table_Insert(MYSQL *my_connection, RouterID RouterID, un
 #endif
 		return DATABASE_ERROR;
 	}
-	
+
 }
 
 
-/*Get IpAddrTable_Info*/
-Status Get_IpAddrTable_Info(MYSQL *my_connection,IPADDRTABLE_INFO *ipaddrtable_info, unsigned int *ipaddrtable_info_nums, const unsigned int RouterID)
+
+/* Functions:  Get Basic_Check_Pool_Info by SwitchId*/
+Status Get_Basic_Check_Pool_Info(MYSQL *my_connection,ArpDynTable_INFO *arpdyntable_info, unsigned int *arpdyntable_info_nums, const unsigned int SwitchId)
 {
 	MYSQL_RES *res_ptr;
 	MYSQL_ROW sqlrow;
 	int count=0;
-	int res;
+	int res,j;
 	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"select RouterID,IpAddrTableEntIfIndex,IpAddrTableEntIp,IpAddrTableEntMask from IpAddrTable where RouterID=%d",RouterID);
+	sprintf(sqlbuff,"select SwitchId,ArpDynIfIndex,ArpDynIpAdd,ArpDynMacAdd,ArpDynVrf,ArpDynVlanId,ArpDynOutIfIndex,ArpDynExpireTime from Basic_Check_Pool where SwitchId=%d",SwitchId);
+	
 	res=mysql_query(my_connection,sqlbuff);
+	printf("res:%d\n",res);
 	if(res)
 	{
 #ifdef DATABASE_DEBUG_MESSAGE
@@ -340,24 +271,36 @@ Status Get_IpAddrTable_Info(MYSQL *my_connection,IPADDRTABLE_INFO *ipaddrtable_i
 	else
 	{
 		res_ptr=mysql_store_result(my_connection);
+		//printf("res_ptr:%d\n",res_ptr);
 		if(res_ptr)
 		{
 #ifdef DATABASE_DEBUG_MESSAGE
 			printf("[DEBUG] database_public: Retrieved %lu rows\n",(unsigned long)mysql_num_rows(res_ptr));
 #endif
-			*ipaddrtable_info_nums=(unsigned int)mysql_num_rows(res_ptr);
+			*arpdyntable_info_nums=(unsigned int)mysql_num_rows(res_ptr);			
 			while((sqlrow=mysql_fetch_row(res_ptr)))
 			{
 #ifdef DATABASE_DEBUG_MESSAGE
 				printf("[DEBUG] database_public: Fetched data...\n");
 #endif
-				ipaddrtable_info[count].routerID=atoi(sqlrow[0]);
-				ipaddrtable_info[count].ipAddrTableEntIfIndex = atoi(sqlrow[1]);
-			//	ipaddrtable_info[count].ipAddrTableEntIp = (char*)malloc(sizeof(char) *16);
-				strcpy(ipaddrtable_info[count].ipAddrTableEntIp,sqlrow[2]);
-			//	ipaddrtable_info[count].ipAddrTableEntMask = (char*)malloc(sizeof(char) *16);
-				strcpy(ipaddrtable_info[count].ipAddrTableEntMask,sqlrow[3]);
+				
+				arpdyntable_info[count].SwitchId=atoi(sqlrow[0]);
+				arpdyntable_info[count].ArpDynIfIndex = atoi(sqlrow[1]);
+				
+				//arpdyntable_info[count].ArpDynIpAdd = (char*)malloc(sizeof(char) *16);
+				strcpy(arpdyntable_info[count].ArpDynIpAdd,sqlrow[2]);
+	
+				//arpdyntable_info[count].ArpDynMacAdd = (char*)malloc(sizeof(char) *20);
+				strcpy(arpdyntable_info[count].ArpDynMacAdd,sqlrow[3]);
+
+				arpdyntable_info[count].ArpDynVrf = atoi(sqlrow[4]);
+				arpdyntable_info[count].ArpDynVlanId= atoi(sqlrow[5]);
+				
+				arpdyntable_info[count].ArpDynOutIfIndex = atoi(sqlrow[6]);
+				arpdyntable_info[count].ArpDynExpireTime= atoi(sqlrow[7]);
+
 				count++;
+				
 			}
 			if(mysql_errno(my_connection))
 			{
@@ -368,446 +311,17 @@ Status Get_IpAddrTable_Info(MYSQL *my_connection,IPADDRTABLE_INFO *ipaddrtable_i
 			}
 			mysql_free_result(res_ptr);
 		}
-	}
-	return DATABASE_OK;
 	
-}
-
-/* delete in the IpAddrTable table where RouterID = ? */
-Status Delete_IpAddrTable_Table_By_RouterID(MYSQL *my_connection,const int RouterID) {
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"delete from IpAddrTable where RouterID = %d", RouterID);
-	res = mysql_query(my_connection, sqlbuff);                                                                                                                  
-	if(!res) {
-#ifdef DATABASE_DEBUG_MESSAGE
-		printf("[DEBUG] database_public: Delete %lu rows\n",(unsigned long)mysql_affected_rows(my_connection));
-#endif
-		return DATABASE_OK;
-	} else {
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_public: Delete error %d: %s\n", mysql_errno(my_connection), mysql_error(my_connection));
-#endif
-		return DATABASE_ERROR;
-	}
-}
-/*update IpAddrTable Table (int)*/
-Status Update_IpAddrTable_info_int(MYSQL *my_connection, unsigned int RouterID , char *Rowname,unsigned int value) {
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"update IpAddrTable set %s = '%d' where RouterID = '%d'", Rowname, value, RouterID);
-	res = mysql_query(my_connection,sqlbuff);                                                                                                                  
-	if(!res) {
-#ifdef DATABASE_DEBUG_MESSAGE
-		printf("[DEBUG] database_public: Update %lu rows\n", (unsigned long)mysql_affected_rows(my_connection));
-#endif
-		return DATABASE_OK;
-	} else {
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_public: Update error %d: %s\n", mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-		return DATABASE_ERROR;
-	}
-
-}
-/*update IpAddrTable Table (char)*/
-Status Update_IpAddrTable_info_char(MYSQL *my_connection, unsigned int RouterID , char *Rowname,char *value) {
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"update Router set %s = '%s' where RouterID = '%d'", Rowname, value, RouterID);
-	res = mysql_query(my_connection,sqlbuff);                                                                                                                  
-	if(!res) {
-#ifdef DATABASE_DEBUG_MESSAGE
-		printf("[DEBUG] database_public: Update %lu rows\n", (unsigned long)mysql_affected_rows(my_connection));
-#endif
-		return DATABASE_OK;
-	} else {
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_public: Update error %d: %s\n", mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-		return DATABASE_ERROR;
-	}
-
-}
-
-/* ---------------------------------------------------------- */
-/*                 RouterConnect    functions                 */
-/* ---------------------------------------------------------- */
-
-/*Insert information into RouterConnect table*/
-Status RouterConnect_Info_Table_Insert(MYSQL *my_connection, LocalRID LocalRID, PeerRID PeerRID, char *LocalRAddr, 
-								char *PeerRAddr)
-{
-
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"insert into RouterConnect(LocalRID,PeerRID,LocalRAddr,PeerRAddr) values(%d,%d,'%s','%s',%d,%d)",LocalRID,PeerRID,LocalRAddr,PeerRAddr);
-	res=mysql_query(my_connection,sqlbuff);
-	if(!res)
-	{
-#ifdef DATABASE_DEBUG_MESSAGE
-		printf("[DEBUG] database_netTopoAutoCatch: Insert %lu rows\n",(unsigned long)mysql_affected_rows(my_connection));
-#endif
 		return DATABASE_OK;
 	}
-	else
-	{
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_netTopoAutoCatch: Insert error %d: %s\n",mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-		return DATABASE_ERROR;
-	}
-	
 }
 
 
-/*Get RouterConnect_Info*/
-Status Get_RouterConnect_Info(MYSQL *my_connection,ROUTER_CONNECT_INFO *router_connect, unsigned int *routerconnect_info_nums, const unsigned int LocalRID)
-{
-	MYSQL_RES *res_ptr;
-	MYSQL_ROW sqlrow;
-	int count=0;
+/* delete in the Basic_Check_Pool table where SwitchId = ? */
+Status Delete_Basic_Check_Pool_By_SwitchId(MYSQL *my_connection,const int SwitchId) {
 	int res;
 	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"select LocalRID,PeerRID,LocalRaddr,PeerRaddr,LocalRIfIndex,PeerRIfIndex from RouterConnect where LocalRID=%d",LocalRID);
-	res=mysql_query(my_connection,sqlbuff);
-	if(res)
-	{
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_public: Select error %d: %s\n",mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-		return	DATABASE_ERROR;
-	}
-	else
-	{
-		res_ptr=mysql_store_result(my_connection);
-		if(res_ptr)
-		{
-#ifdef DATABASE_DEBUG_MESSAGE
-			printf("[DEBUG] database_public: Retrieved %lu rows\n",(unsigned long)mysql_num_rows(res_ptr));
-#endif
-			*routerconnect_info_nums=(unsigned int)mysql_num_rows(res_ptr);
-			while((sqlrow=mysql_fetch_row(res_ptr)))
-			{
-#ifdef DATABASE_DEBUG_MESSAGE
-				printf("[DEBUG] database_public: Fetched data...\n");
-#endif
-				router_connect[count].localRID=atoi(sqlrow[0]);
-				router_connect[count].peerRID=atoi(sqlrow[1]);
-			//	router_connect[count].localRAddr = (char*)malloc(sizeof(char) *16);
-				strcpy(router_connect[count].localRAddr,sqlrow[2]);
-			//	router_connect[count].peerRAddr = (char*)malloc(sizeof(char) *16);
-				strcpy(router_connect[count].peerRAddr,sqlrow[3]);
-				router_connect[count].localRIfIndex=atoi(sqlrow[4]);
-				router_connect[count].peerRIfIndex=atoi(sqlrow[5]);
-				count++;
-			}
-			if(mysql_errno(my_connection))
-			{
-#ifdef DATABASE_DEBUG_MESSAGE
-				fprintf(stderr,"[ERROR] database_public: Retrieve error %d: %s\n",mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-				return DATABASE_ERROR;
-			}
-			mysql_free_result(res_ptr);
-		}
-	}
-	return DATABASE_OK;
-	
-}
-
-/* delete in the RouterConnect table where LocalRID and PeerRID */
-Status Delete_RouterConnect_Table_By_LocalRID_PeerRID(MYSQL *my_connection,const int LocalRID,const int PeerRID) {
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"delete from RouterConnect where LocalRID = %d and PeerRID = %d", LocalRID,PeerRID);
-	res = mysql_query(my_connection, sqlbuff);                                                                                                                  
-	if(!res) {
-#ifdef DATABASE_DEBUG_MESSAGE
-		printf("[DEBUG] database_public: Delete %lu rows\n",(unsigned long)mysql_affected_rows(my_connection));
-#endif
-		return DATABASE_OK;
-	} else {
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_public: Delete error %d: %s\n", mysql_errno(my_connection), mysql_error(my_connection));
-#endif
-		return DATABASE_ERROR;
-	}
-}
-/*update RouterConnect Table (int)*/
-Status Update_RouterConnect_info_int(MYSQL *my_connection, unsigned int LocalRID ,unsigned int PeerRID, char *Rowname,unsigned int value) {
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"update RouterConnect set %s = '%d' where LocalRID = '%d' and PeerRID = '%d'", Rowname, value, LocalRID,PeerRID);
-	res = mysql_query(my_connection,sqlbuff);                                                                                                                  
-	if(!res) {
-#ifdef DATABASE_DEBUG_MESSAGE
-		printf("[DEBUG] database_public: Update %lu rows\n", (unsigned long)mysql_affected_rows(my_connection));
-#endif
-		return DATABASE_OK;
-	} else {
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_public: Update error %d: %s\n", mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-		return DATABASE_ERROR;
-	}
-
-}
-/*update RouterConnect Table (char)*/
-Status Update_RouterConnect_info_char(MYSQL *my_connection, unsigned int LocalRID , unsigned int PeerRID, char *Rowname,char *value) {
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"update Router set %s = '%s' where LocalRID = '%d' and PeerRID = '%d'", Rowname, value, LocalRID, PeerRID);
-	res = mysql_query(my_connection,sqlbuff);                                                                                                                  
-	if(!res) {
-#ifdef DATABASE_DEBUG_MESSAGE
-		printf("[DEBUG] database_public: Update %lu rows\n", (unsigned long)mysql_affected_rows(my_connection));
-#endif
-		return DATABASE_OK;
-	} else {
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_public: Update error %d: %s\n", mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-		return DATABASE_ERROR;
-	}
-
-}
-
-
-/* ---------------------------------------------------------- */
-/*                      Subnet    functions                   */
-/* ---------------------------------------------------------- */
-
-/*Insert information into Subnet table*/
-Status Subnet_Info_Table_Insert(MYSQL *my_connection, RouterID RouterID, unsigned int SubnetIfIndex,char *SubnetIp, 
-								char *SubnetMask,  unsigned int HostVectorNum)
-{
-
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"insert into Subnet(RouterID,SubnetIfIndex,SubnetIp,SubnetMask,HostVectorNum) values(%d,%d,'%s','%s',%d)",RouterID,SubnetIfIndex,SubnetIp,SubnetMask,HostVectorNum);
-	res=mysql_query(my_connection,sqlbuff);
-	if(!res)
-	{
-#ifdef DATABASE_DEBUG_MESSAGE
-		printf("[DEBUG] database_netTopoAutoCatch: Insert %lu rows\n",(unsigned long)mysql_affected_rows(my_connection));
-#endif
-		return DATABASE_OK;
-	}
-	else
-	{
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_netTopoAutoCatch: Insert error %d: %s\n",mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-		return DATABASE_ERROR;
-	}
-	
-}
-
-
-/*Get Subnet_Info*/
-Status Get_Subnet_Info(MYSQL *my_connection,SUBNET_INFO *subnet_info, unsigned int *subnet_info_nums, const unsigned int RouterID)
-{
-	MYSQL_RES *res_ptr;
-	MYSQL_ROW sqlrow;
-	int count=0;
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"select RouterID,SubnetIfIndex,SubnetIp,SubnetMask,HostVectorNum where RouterID=%d",RouterID);
-	res=mysql_query(my_connection,sqlbuff);
-	if(res)
-	{
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_public: Select error %d: %s\n",mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-		return	DATABASE_ERROR;
-	}
-	else
-	{
-		res_ptr=mysql_store_result(my_connection);
-		if(res_ptr)
-		{
-#ifdef DATABASE_DEBUG_MESSAGE
-			printf("[DEBUG] database_public: Retrieved %lu rows\n",(unsigned long)mysql_num_rows(res_ptr));
-#endif
-			*subnet_info_nums=(unsigned int)mysql_num_rows(res_ptr);
-			while((sqlrow=mysql_fetch_row(res_ptr)))
-			{
-#ifdef DATABASE_DEBUG_MESSAGE
-				printf("[DEBUG] database_public: Fetched data...\n");
-#endif
-				subnet_info[count].routerID=atoi(sqlrow[0]);
-				subnet_info[count].subnetIfIndex=atoi(sqlrow[1]);
-			//	subnet_info[count].subnetIp = (char*)malloc(sizeof(char) *16);
-				strcpy(subnet_info[count].subnetIp,sqlrow[2]);
-			//	subnet_info[count].subnetMask = (char*)malloc(sizeof(char) *16);
-				strcpy(subnet_info[count].subnetMask,sqlrow[3]);
-				subnet_info[count].hostVectorNum=atoi(sqlrow[4]);
-				count++;
-			}
-			if(mysql_errno(my_connection))
-			{
-#ifdef DATABASE_DEBUG_MESSAGE
-				fprintf(stderr,"[ERROR] database_public: Retrieve error %d: %s\n",mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-				return DATABASE_ERROR;
-			}
-			mysql_free_result(res_ptr);
-		}
-	}
-		return DATABASE_OK;
-	
-}
-
-/* delete in the Subnet table where RouterID and SubnetIfIndex */
-Status Delete_IpAddrTable_Table_By_RouterID_SubnetIfIndex(MYSQL *my_connection,const int RouterID,int SubnetIfIndex) {
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"delete from IpAddrTable where RouterID = %d and SubnetIfIndex = %d", RouterID,SubnetIfIndex);
-	res = mysql_query(my_connection, sqlbuff);                                                                                                                  
-	if(!res) {
-#ifdef DATABASE_DEBUG_MESSAGE
-		printf("[DEBUG] database_public: Delete %lu rows\n",(unsigned long)mysql_affected_rows(my_connection));
-#endif
-		return DATABASE_OK;
-	} else {
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_public: Delete error %d: %s\n", mysql_errno(my_connection), mysql_error(my_connection));
-#endif
-		return DATABASE_ERROR;
-	}
-}
-/*update Subnet Table (int)*/
-Status Update_Subnet_info_int(MYSQL *my_connection, unsigned int RouterID ,int SubnetIfIndex, char *Rowname,unsigned int value) {
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"update Subnet set %s = '%d' where RouterID = '%d' and SubnetIfIndex = %d", Rowname, value, RouterID,SubnetIfIndex);
-	res = mysql_query(my_connection,sqlbuff);                                                                                                                  
-	if(!res) {
-#ifdef DATABASE_DEBUG_MESSAGE
-		printf("[DEBUG] database_public: Update %lu rows\n", (unsigned long)mysql_affected_rows(my_connection));
-#endif
-		return DATABASE_OK;
-	} else {
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_public: Update error %d: %s\n", mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-		return DATABASE_ERROR;
-	}
-
-}
-/*update Subnet Table (char)*/
-Status Update_Subnet_info_char(MYSQL *my_connection, unsigned int RouterID ,int SubnetIfIndex, char *Rowname,char *value) {
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"update Subnet set %s = '%s' where RouterID = '%d' and SubnetIfIndex = %d", Rowname, value, RouterID,SubnetIfIndex);
-	res = mysql_query(my_connection,sqlbuff);                                                                                                                  
-	if(!res) {
-#ifdef DATABASE_DEBUG_MESSAGE
-		printf("[DEBUG] database_public: Update %lu rows\n", (unsigned long)mysql_affected_rows(my_connection));
-#endif
-		return DATABASE_OK;
-	} else {
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_public: Update error %d: %s\n", mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-		return DATABASE_ERROR;
-	}
-
-}
-
-
-/* ---------------------------------------------------------- */
-/*                        Host    functions                   */
-/* ---------------------------------------------------------- */
-
-/*Insert information into Host table*/
-Status Host_Info_Table_Insert(MYSQL *my_connection, unsigned int HostID, unsigned int SubnetIfIndex,char *HostName, unsigned int HostType,char *HostIpAddr,  char *HostAddrMask)
-{
-
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"insert into Host(HostID,SubnetIfIndex,HostName,HostType,HostIpAddr,HostAddrMask) values(%d,%d,'%s',%d,'%s','%s')",HostID,SubnetIfIndex,HostName,HostType,HostIpAddr,HostAddrMask);
-	res=mysql_query(my_connection,sqlbuff);
-	if(!res)
-	{
-#ifdef DATABASE_DEBUG_MESSAGE
-		printf("[DEBUG] database_netTopoAutoCatch: Insert %lu rows\n",(unsigned long)mysql_affected_rows(my_connection));
-#endif
-		return DATABASE_OK;
-	}
-	else
-	{
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_netTopoAutoCatch: Insert error %d: %s\n",mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-		return DATABASE_ERROR;
-	}
-	
-}
-
-/*Get Host_Info*/
-Status Get_Host_Info(MYSQL *my_connection,HOST_INFO *host_info, unsigned int *host_info_nums, const unsigned int SubnetIfIndex)
-{
-	MYSQL_RES *res_ptr;
-	MYSQL_ROW sqlrow;
-	int count=0;
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"select HostID,SubnetIfIndex,HostName,HostType,HostIpAddr,HostAddrMask where SubnetIfIndex=%d",SubnetIfIndex);
-	res=mysql_query(my_connection,sqlbuff);
-	if(res)
-	{
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_public: Select error %d: %s\n",mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-		return	DATABASE_ERROR;
-	}
-	else
-	{
-		res_ptr=mysql_store_result(my_connection);
-		if(res_ptr)
-		{
-#ifdef DATABASE_DEBUG_MESSAGE
-			printf("[DEBUG] database_public: Retrieved %lu rows\n",(unsigned long)mysql_num_rows(res_ptr));
-#endif
-			*host_info_nums=(unsigned int)mysql_num_rows(res_ptr);
-			while((sqlrow=mysql_fetch_row(res_ptr)))
-			{
-#ifdef DATABASE_DEBUG_MESSAGE
-				printf("[DEBUG] database_public: Fetched data...\n");
-#endif
-			//	host_info[count].hostID = (char*)malloc(sizeof(char) *64);
-				strcpy(host_info[count].hostID,sqlrow[0]);
-				host_info[count].parentIfIndex=atoi(sqlrow[1]);
-			//	host_info[count].hostName = (char*)malloc(sizeof(char) *64);
-				strcpy(host_info[count].hostName,sqlrow[2]);
-				host_info[count].hostType=atoi(sqlrow[3]);
-			//	host_info[count].hostIpAddr = (char*)malloc(sizeof(char) *16);
-				strcpy(host_info[count].hostIpAddr,sqlrow[4]);
-			//	host_info[count].hostAddrMask = (char*)malloc(sizeof(char) *16);
-				strcpy(host_info[count].hostAddrMask,sqlrow[5]);
-				count++;
-			}
-			if(mysql_errno(my_connection))
-			{
-#ifdef DATABASE_DEBUG_MESSAGE
-				fprintf(stderr,"[ERROR] database_public: Retrieve error %d: %s\n",mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-				return DATABASE_ERROR;
-			}
-			mysql_free_result(res_ptr);
-		}
-	}
-	return DATABASE_OK;
-	
-}
-
-/* delete in the Host table where RouterID = ? */
-Status Delete_Host_Table_By_RouterID(MYSQL *my_connection,const int HostID) {
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"delete from Host where HostID = %d", HostID);
+	sprintf(sqlbuff,"delete from Basic_Check_Pool where SwitchId = %d", SwitchId);
 	res = mysql_query(my_connection, sqlbuff);                                                                                                                  
 	if(!res) {
 #ifdef DATABASE_DEBUG_MESSAGE
@@ -822,48 +336,82 @@ Status Delete_Host_Table_By_RouterID(MYSQL *my_connection,const int HostID) {
 	}
 }
 
-//update Host Table (int)
-Status Update_Host_info_int(MYSQL *my_connection, unsigned int HostID , char *Rowname,unsigned int value) {
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"update Host set %s = '%d' where HostID = '%d'", Rowname, value, HostID);
-	res = mysql_query(my_connection,sqlbuff);                                                                                                                  
-	if(!res) {
-#ifdef DATABASE_DEBUG_MESSAGE
-		printf("[DEBUG] database_public: Update %lu rows\n", (unsigned long)mysql_affected_rows(my_connection));
-#endif
-		return DATABASE_OK;
-	} else {
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_public: Update error %d: %s\n", mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-		return DATABASE_ERROR;
-	}
 
+
+/* ---------------------------------------------------------- */
+/*                topo_host_node   functions                    */
+/* ---------------------------------------------------------- */
+
+/* Functions:  Get topo_host_node by SwitchId*/
+Status Get_topo_host_node_Info(MYSQL *my_connection,ArpDynTable_INFO *arpdyntable_info, unsigned int *arpdyntable_info_nums, const unsigned int SwitchId)
+{
+	MYSQL_RES *res_ptr;
+	MYSQL_ROW sqlrow;
+	int count=0;
+	int res,j;
+	char sqlbuff[SQLBUFFLEN];
+	sprintf(sqlbuff,"select SwitchId,ArpDynIfIndex,ArpDynIpAdd,ArpDynMacAdd,ArpDynVrf,ArpDynVlanId,ArpDynOutIfIndex,ArpDynExpireTime from topo_host_node where SwitchId=%d",SwitchId);
+	
+	res=mysql_query(my_connection,sqlbuff);
+	printf("res:%d\n",res);
+	if(res)
+	{
+#ifdef DATABASE_DEBUG_MESSAGE
+		fprintf(stderr,"[ERROR] database_public: Select error %d: %s\n",mysql_errno(my_connection),mysql_error(my_connection));
+#endif
+		return	DATABASE_ERROR;
+	}
+	else
+	{
+		res_ptr=mysql_store_result(my_connection);
+		//printf("res_ptr:%d\n",res_ptr);
+		if(res_ptr)
+		{
+#ifdef DATABASE_DEBUG_MESSAGE
+			printf("[DEBUG] database_public: Retrieved %lu rows\n",(unsigned long)mysql_num_rows(res_ptr));
+#endif
+			*arpdyntable_info_nums=(unsigned int)mysql_num_rows(res_ptr);			
+			while((sqlrow=mysql_fetch_row(res_ptr)))
+			{
+#ifdef DATABASE_DEBUG_MESSAGE
+				printf("[DEBUG] database_public: Fetched data...\n");
+#endif
+				
+				arpdyntable_info[count].SwitchId=atoi(sqlrow[0]);
+				arpdyntable_info[count].ArpDynIfIndex = atoi(sqlrow[1]);
+				
+				//arpdyntable_info[count].ArpDynIpAdd = (char*)malloc(sizeof(char) *16);
+				strcpy(arpdyntable_info[count].ArpDynIpAdd,sqlrow[2]);
+	
+				//arpdyntable_info[count].ArpDynMacAdd = (char*)malloc(sizeof(char) *20);
+				strcpy(arpdyntable_info[count].ArpDynMacAdd,sqlrow[3]);
+
+				arpdyntable_info[count].ArpDynVrf = atoi(sqlrow[4]);
+				arpdyntable_info[count].ArpDynVlanId= atoi(sqlrow[5]);
+				
+				arpdyntable_info[count].ArpDynOutIfIndex = atoi(sqlrow[6]);
+				arpdyntable_info[count].ArpDynExpireTime= atoi(sqlrow[7]);
+
+				count++;
+				
+			}
+			if(mysql_errno(my_connection))
+			{
+#ifdef DATABASE_DEBUG_MESSAGE
+				fprintf(stderr,"[ERROR] database_public: Retrieve error %d: %s\n",mysql_errno(my_connection),mysql_error(my_connection));
+#endif
+				return DATABASE_ERROR;
+			}
+			mysql_free_result(res_ptr);
+		}
+	
+		return DATABASE_OK;
+	}
 }
 
-//update Host Table (char)
-Status Update_Host_info_char(MYSQL *my_connection, unsigned int HostID , char *Rowname,char *value) {
-	int res;
-	char sqlbuff[SQLBUFFLEN];
-	sprintf(sqlbuff,"update Host set %s = '%s' where HostID = '%d'", Rowname, value, HostID);
-	res = mysql_query(my_connection,sqlbuff);                                                                                                                  
-	if(!res) {
-#ifdef DATABASE_DEBUG_MESSAGE
-		printf("[DEBUG] database_public: Update %lu rows\n", (unsigned long)mysql_affected_rows(my_connection));
-#endif
-		return DATABASE_OK;
-	} else {
-#ifdef DATABASE_DEBUG_MESSAGE
-		fprintf(stderr,"[ERROR] database_public: Update error %d: %s\n", mysql_errno(my_connection),mysql_error(my_connection));
-#endif
-		return DATABASE_ERROR;
-
-	}
-
-}
 
 
+/*
 
 int main(){
 
@@ -871,26 +419,35 @@ int main(){
 	Status i,j;
 
 	i=Database_Connect(&mysql);
-//	ROUTER_INFO router_info[64];
+	SWITCH_INFO switch_info[64];
 	int switch_info_nums=0;
 //	Status arpdyn_info_insert=ArpDyn_Info_Table_Insert(&mysql,2,1,"192.168.200.2",2,"ae:3c:8b:4a:5a",2,6,23);
-	Status switch_info_insert=Switch_Info_Table_Insert(&mysql,2,"192.268.200.253");
-	printf("status:%d\n",switch_info_insert);
-//	Status get_router_info=Get_Router_Info(&mysql,router_info,&router_info_nums,0);
-//	printf("%d,%s,%s",router_info[0].routerID,router_info[0].routerName,router_info[0].flagIpAddr);
-//        Status delete_router_table_by_routerID=Delete_Router_Table_By_RouterID(&mqsql,0);
+//	Status switch_info_insert=Switch_Info_Table_Insert(&mysql,2,"192.268.200.253");
+//	printf("status:%d\n",switch_info_insert);
+//	Status get_switch_info=Get_Switch_Info(&mysql,switch_info,&switch_info_nums,1);
+//	printf("%d\n%s\n",switch_info[0].SwitchId,switch_info[0].IpAddr);
+//        Status delete_switch_table_by_switchId=Delete_Switch_Table_By_SwitchId(&mysql,1);
+//	printf("status:%d\n",delete_switch_table_by_switchId);
 
-/*
-	IPADDRTABLE_INFO ipAddrTable_info[64];
-	int ipAddrTable_info_nums=0; 
-	Status ipAddr_info_insert=IpAddrTable_Info_Table_Insert(&mysql,0,001,"192.0.0.0","255.255.255.0");
-	Status get_ipaddr_info=Get_IpAddrTable_Info(&mysql,ipAddrTable_info,&ipAddrTable_info_nums,0);	
-	printf("%d,%d,%s,%s",ipAddrTable_info[0].routerID,ipAddrTable_info[0].ipAddrTableEntIfIndex,ipAddrTable_info[0].ipAddrTable_info,ipAddrTable_info[0].ipAddrTableEntMask);
+	ArpDynTable_INFO arpdynTable_info[90];
+	int arpdynTable_info_nums=0; 
+	Status arpdyn_info_insert=ArpDyn_Info_Table_Insert(&mysql,1,1,"192.168.200.2",2,"ae:3c:8b:4a:5a",2,6,23);
+	printf("insert status:%d\n",arpdyn_info_insert);
+	Status get_arpdyn_info=Get_ArpDynTable_Info(&mysql,arpdynTable_info,&arpdynTable_info_nums,1);	
+	printf("get status:%d\n",get_arpdyn_info);
+	printf("get arpdynTable_info_nums:%d\n",arpdynTable_info_nums);
+	int k=0;
+	for(k = 0; k<arpdynTable_info_nums; k++){
+		printf("%d,%d,%s,%d,%s,%d,%d,%d\n",arpdynTable_info[k].SwitchId,arpdynTable_info[k].ArpDynIfIndex,arpdynTable_info[k].ArpDynIpAdd,arpdynTable_info[k].ArpDynVrf,arpdynTable_info[k].ArpDynMacAdd,arpdynTable_info[k].ArpDynVlanId,arpdynTable_info[k].ArpDynOutIfIndex,arpdynTable_info[k].ArpDynExpireTime);
+	}
 
-
+//SwitchId,ArpDynIfIndex,ArpDynIpAdd,ArpDynVrf,ArpDynMacAdd,ArpDynVlanId,ArpDynOutIfInd,ArpDynExpireTime
+//	Status delete_arpdyn_table_info=Delete_ArpDyn_Table_By_SwitchId(&mysql,1);
+//	printf("status:%d\n",delete_arpdyn_table_info);
 //	Status update_router_info=Update_Router_info_int(&mysql, 1 , "RouterID",9) ;
-//	Status update_router_char=Update_Router_info_char(&mysql, 9 , "FlagIpAddr","199.192.100.100");
-	j=Database_DisConnect(&mysql);*/
+//	Status update_switch_char=Update_Switch_info_char(&mysql, 2 , "IpAddr","199.192.100.100");
+//	printf("status:%d\n",update_switch_char);
+	j=Database_DisConnect(&mysql);
 	return 	0;
 }
-
+*/
