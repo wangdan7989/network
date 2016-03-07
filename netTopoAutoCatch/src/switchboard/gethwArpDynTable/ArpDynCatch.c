@@ -1,20 +1,26 @@
 
 #include "ArpDynCatch.h"
 
-/*  judge IpAddr in database_ArpDyn_TABLE DES=DATABASE*/
+/*  judge IpAddr in database_ArpDyn_TABLE DES=DATABASE */
+/*   Resultdata is the return,include the ip,mac,flag, relength is Resultdata length                                                 */
 /*--------------------------------------------------------*/
 /**
 		falg=0:illegal
-		flag=1:legal
+		flag=1:legal:
+				flag=11:ip and mac is legal(ip and mac all in basic_check_pool)
+				flag=10:ip is in basic_check_pool,but mac is not
+						flag=111:the ip and mac is not in basic and in topo,so it's new one
+						flag=110:the ip is is only in topo but mac is not,it's new one
 **/
 /*--------------------------------------------------------*/
-Flag Judge_IpAddr_is_Legal(const unsigned char *switchip,unsigned char *comm,
+HOST_INFO* Judge_IpAddr_is_Legal(const unsigned char *switchip,unsigned char *comm,
 						IP_ArpDyn_TABLE_INFO *src_arpdyn_table_info,
-						ArpDynTable_INFO *des_arpdyn_table_info){
+						ArpDynTable_INFO *des_arpdyn_table_info,
+						HOST_INFO *Resultdata,unsigned int *relength){
 	MYSQL mysql;
 	Status i,j;
 	i=Database_Connect(&mysql);
-	Flag illegal_flag;
+	Flag illegal_flag=1;
 
 //print on the Blog the time
 	time_t rawtime;
@@ -31,8 +37,8 @@ Flag Judge_IpAddr_is_Legal(const unsigned char *switchip,unsigned char *comm,
 //judge host_ip in Basic_Check_Pool
 	unsigned int src_num = 0;
 	unsigned int des_num = 0;
-	unsigned int *NIBcount;
-	unsigned int *IBcount;
+	unsigned int NIBcount;
+	unsigned int IBcount;
 	IBcount = 0;
 	NIBcount = 0;
 
@@ -51,9 +57,14 @@ Flag Judge_IpAddr_is_Legal(const unsigned char *switchip,unsigned char *comm,
 	HOST_INFO *NIBase=NULL;
 	NIBase=(HOST_INFO *)malloc(sizeof(HOST_INFO) * MAX_MY_OID_RESULT_LEN);
 	memset(NIBase,0,sizeof(HOST_INFO) * MAX_MY_OID_RESULT_LEN);
+	Resultdata=(HOST_INFO *)malloc(sizeof(HOST_INFO) * MAX_MY_OID_RESULT_LEN);
+	memset(Resultdata,0,sizeof(HOST_INFO) * MAX_MY_OID_RESULT_LEN);
+	printf("\007[TIME]:%s",asctime(timeinfo));
 	Flag flag = Judge_IpAddr_from_Src_And_Des(src_arpdyn_table_info,src_num,
 						des_arpdyn_table_info,des_num,legal,NIBase,&IBcount,&NIBcount);
-	
+
+	Copy_Hostinfo_Arry(0,IBcount,legal,Resultdata);
+	*relength=(*relength)+(IBcount);
 	
 	
 //if host is not in Basic_Check_Pool,then search in topo_host_node
@@ -82,13 +93,21 @@ Flag Judge_IpAddr_is_Legal(const unsigned char *switchip,unsigned char *comm,
 		illegal_flag = Judge_IpAddr_from_Src_And_Des(src_arpdyn_table_info,src_num,des_arpdyn_table_info,
 							des_num,legal,illegal,&legcount,&illcount);
 
-	
+		
+		
+		
 		//if host in topo_host_node: flag=1(HOST_INFO legal is not null),insert the host into Basic_Check_Pool
 		// the indx of HOST_info is des_arpdyn_table_info index;
 		if(illegal_flag=1){
+			Copy_Hostinfo_Arry(IBcount,&legcount,legal,Resultdata);
+			//new legal join,should change the flag;
+			int j=0;
+			for(j=(*relength);j<(*relength+*legcount);j++){
+				Resultdata[j].flag=Resultdata[j].flag+100;
+			}
+			*relength=(*relength)+(*legcount);
 			unsigned int a;
 			unsigned int b;
-			printf("\007[TIME]:%s\n",asctime(timeinfo));
 			for(a = 0; a < legcount;a++){
 				b = legal[a].index;
 				//insert into Basic_Check_Pool
@@ -100,10 +119,7 @@ Flag Judge_IpAddr_is_Legal(const unsigned char *switchip,unsigned char *comm,
 						des_arpdyn_table_info[b].ArpDynVlanId,
 						des_arpdyn_table_info[b].ArpDynOutIfIndex,
 						des_arpdyn_table_info[b].ArpDynExpireTime);
-				
-				printf("NEW NET ELEMENT JOIN! [IPADDR]:%s    [MACADDR]:%s\n",
-					des_arpdyn_table_info[b].ArpDynIpAdd,
-					des_arpdyn_table_info[b].ArpDynMacAdd,);
+
 			}
 			
 			
@@ -111,16 +127,17 @@ Flag Judge_IpAddr_is_Legal(const unsigned char *switchip,unsigned char *comm,
 	
 		//if host not in topo_host_node : flag =0(HOST_INFO illegal is not null ),judge the host is illegal
 		if(illegal_flag=0){
-			int q; 
-			printf("\007[TIME]:%s\n",asctime(timeinfo));
-			for(q = 0;q < illcount; q++){
-				printf("[ILLGEAL]:ILLGEAL NET ELEMENT JOIN! :\n IPAddr:%s  MACAddr:%s\n",
-						illegal[q].ArpDynIpAdd,illegal[q].ArpDynMacAdd);
+			Copy_Hostinfo_Arry(IBcount+*legcount,illcount,illegal,Resultdata);
+			int j=0;
+			for(j=(*relength);j<(*relength+*illcount);j++){
+				Resultdata[j].flag=Resultdata[j].flag+100;
 			}
+			*relength=(*relength)+(*illcount);
 		}
 	
 	}
-	return illegal_flag;
+	
+	return Resultdata;
 }
 
 
@@ -129,7 +146,8 @@ Flag Judge_IpAddr_is_Legal(const unsigned char *switchip,unsigned char *comm,
 /**             Judge_IpAddr is illegal from two table src and des     **/
 /**
 		falg=0:illegal
-		flag=1:legal
+		flag=1x:legal    flag=11:ip and mac is legal
+				 flag=10:ip is legal and mac is illegal    
 **/
 /**--------------------------------------------------------------------**/
 
@@ -151,14 +169,18 @@ Flag Judge_IpAddr_from_Src_And_Des(IP_ArpDyn_TABLE_INFO *src_arpdyn_table_info,u
 							legal[legcon].index = desindex;
 							legal[legcon].ArpDynIpAdd = src_arpdyn_table_info[srcindex].ArpDynIpAdd;
 							legal[legcon].ArpDynMacAdd = src_arpdyn_table_info[srcindex].ArpDynMacAdd;
-							legcon++;
-							
-					printf("ip:%s is ok!\n",src_arpdyn_table_info[srcindex].ArpDynIpAdd);
+							legal[legcon].flag=11;
+							legcon++;				
+							flag=1;	
 					
-					flag=1;	
+					
 				}
-				else {
-					printf("ip:%s 's macaddr is conflicting!\n",src_arpdyn_table_info[srcindex].ArpDynIpAdd);
+				else {	
+					legal[legcon].index = desindex;
+					legal[legcon].ArpDynIpAdd = src_arpdyn_table_info[srcindex].ArpDynIpAdd;
+					legal[legcon].ArpDynMacAdd = src_arpdyn_table_info[srcindex].ArpDynMacAdd;
+					legal[legcon].flag=10;
+					legcon++;
 					flag=1;						
 				}						
 			}
@@ -167,8 +189,9 @@ Flag Judge_IpAddr_from_Src_And_Des(IP_ArpDyn_TABLE_INFO *src_arpdyn_table_info,u
 			illegal[illcon].index = desindex;
 			illegal[illcon].ArpDynIpAdd = src_arpdyn_table_info[srcindex].ArpDynIpAdd;
 			illegal[illcon].ArpDynMacAdd = src_arpdyn_table_info[srcindex].ArpDynMacAdd;
+			illegal[illcon].flag = 0;
 			illcon++;
-			printf("ip:%s is illegal!\n",src_arpdyn_table_info[srcindex].ArpDynIpAdd);
+			
 		}		
 	}
 	*illcount=illcon;
@@ -177,17 +200,37 @@ Flag Judge_IpAddr_from_Src_And_Des(IP_ArpDyn_TABLE_INFO *src_arpdyn_table_info,u
 			
 }
 
-
+/**--------------------------------------------------------------------**/
+/**             copy HOST_INFO src to des,and length is src length,index is the des first     **/
+/**--------------------------------------------------------------------**/
+void Copy_Hostinfo_Arry(int index,int length,HOST_INFO *src,HOST_INFO *des){
+	int m=index,n=0;
+	
+	for(n=0;n<length;n++){
+		des[m].ArpDynIpAdd=src[n].ArpDynIpAdd;
+		des[m].ArpDynMacAdd=src[n].ArpDynMacAdd;
+		des[m].flag=src[n].flag;
+		m++;
+	}
+	
+}
 
 int main(int argc,char *argv[]){
-/*
+
 	char *ip = SWITCHIPADDR0 ;
 	char *comm = PASSWORD;
+	unsigned int relength=0;
 	IP_ArpDyn_TABLE_INFO *src_arpdyn_table_info=NULL;
 	ArpDynTable_INFO *des_arpdyn_table_info=NULL;
+	HOST_INFO *Resultdata=NULL;
+	int i=0;
 
-	int result=Judge_IpAddr_is_Legal(ip,comm,src_arpdyn_table_info,des_arpdyn_table_info);
-*/
+	Resultdata=Judge_IpAddr_is_Legal(ip,comm,src_arpdyn_table_info,des_arpdyn_table_info,Resultdata,&relength);
+	
+	for(i=0;i<relength;i++){
+		printf("ArpDynIpAdd:%s   ArpDynMacAdd:%s  flag:%d   \n",Resultdata[i].ArpDynIpAdd,Resultdata[i].ArpDynMacAdd,Resultdata[i].flag);
+	}
+
 	
 	
 }

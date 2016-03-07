@@ -1,0 +1,29 @@
+1.gethwArpDynTable.c:该文件里仅有一个方法：get_ArpDyn_table_info_from_device_by_snmp
+		通过snmp协议得到华为交换机上的动态arp表项,实际能得到的该表项里的信息有：
+			
+		/*get the ArpDynIfIdex */   生成动态ARP表项的三层接口索引
+		/*get the ArpDynVrf */	动态ARP表项的VPN名称
+		/*get the ip_addr */  动态ARP表项的IP地址。
+		/* get the MAC addr table entity ip */动态ARP表项的MAC地址
+		/* get the Arp_Dyn_VlanId   */动态ARP表项的VLAN
+		/* get the Arp_Dyn_OutIfIndex   */动态ARP表项的出接口的接口索引
+		/* get the Arp_Dyn_ExpireTime   */	动态ARP表项的老化时间
+2.database_ArpDynCatch.c:这里包括连接，断开数据库的方法，以及对几张表的增删改查。
+	数据库目前的内容：一共有4个表：	基准校验池（已存在的合法设备）：Basic_Check_Pool_Info_Table
+					交换机具体信息（id，ip地址）：SwitchInfoTable
+					设备标准池（和基准校验池的结构一致）：topo_host_node
+					测试表格：test
+	
+	几个表格的方法：	
+	SwitchInfoTable：根据交换机的id得到其ip地址；插入数据；根据交换机的id删除信息；更新交换机的信息
+	Basic_Check_Pool：根据交换机的id得到校验池中具体的交换机的信息；根据交换机的id插入新的具体的信息；根据交换机的id删除一条数据
+	SwitchInfoTable：根据交换机的id得到一条信息
+
+3.ArpDynCatch:判断一个从交换机上的arp上得到的一个设备的ip信息是否合法，得到这张arp表格之后，对他上面的每一条设备信息逐条判断，首先检查这条信息是否在基准校验池里面，如果在则合法，如果不在就到标准池里找，若能找到，则说明这个设备合法，将他加入基准校验池中，如果找不到，则这个设备非法，系统将提出报警。这里还有一些小细节，没能系统的处理，对于具体的非法情况，比如，ip，mac不符合，或者是ip，mac成对被盗，这里就只是给出了日志的打印，没有具体分析其原因，也还没有判断是否还有其他的情况。
+	该文件中应该是包含着最后的main方法，当然这里应该会把main方法隔离出来单独一个文件，因为该文件中需要加入定时查询的方法，到时候可以直接将该文件编译成二进制文件，共后台使用。
+具体方法的说明：
+Flag Judge_IpAddr_is_Legal：得到这张arp表格之后，对他上面的每一条设备信息逐条判断，首先检查这条信息是否在基准校验池里面，如果在则合法，如果不在就
+			到标准池里找，若能找到，则说明这个设备合法，将他加入基准校验池中，如果找不到，则这个设备非法，系统将提出报警。
+Flag Judge_IpAddr_from_Src_And_Des：该方法是封装了判断一个设备信息是否同时在两张表内，该方法被Flag Judge_IpAddr_is_Legal引用
+
+	注意这里有一个小细节，之前本来说的标准池的数据以该项目的数据库为准，即智能监控平台，但是现在没法拿到上面的数据库，因为还没有集成，所以这里实验用的标准库就是第一次从交换机的arp表上取得的数据
