@@ -221,6 +221,7 @@ int main(int argc,char **argv){
 	strcpy(ip,argv[1]);	
 
 	char *comm = PASSWORD;
+	//char *ip = SWITCHIPADDR2;
 	unsigned int relength=0;
 	IP_ArpDyn_TABLE_INFO *src_arpdyn_table_info=NULL;
 	ArpDynTable_INFO *des_arpdyn_table_info=NULL;

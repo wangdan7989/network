@@ -211,7 +211,7 @@ int get_ArpDyn_table_info_from_device_by_snmp(const unsigned char *ip,
 	return 0;
 }
 
-/*
+
 int main(int argc, char *argv[]) {
 	
 	
@@ -250,5 +250,5 @@ int main(int argc, char *argv[]) {
 	
 
 }
-*/
+
 

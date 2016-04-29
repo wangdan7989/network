@@ -1,3 +1,4 @@
+0.ArpDynCatch.sh是编译ArpDynCatch的文件，如果需要重新编译，则直接运行还文件；整个系统直接运行的是:./ArpDynCatch 192.168.200.252    即文件加交换机的ip地址，这个也可以在ArpDynCatch.c的main方法中进行具体的修改，看需要什么样的格式，因为这个在后台是需要直接传交换机的ip地址参数的，所以这里把交换机的ip当做参数传进去，在ci框架中的可执行ArpDynCatch文件是一个需要传参的。
 1.gethwArpDynTable.c:该文件里仅有一个方法：get_ArpDyn_table_info_from_device_by_snmp
 		通过snmp协议得到华为交换机上的动态arp表项,实际能得到的该表项里的信息有：
 			
