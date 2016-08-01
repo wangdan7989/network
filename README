@@ -1,0 +1,3 @@
+毕设的具体实现在该目录下：/workspace/network/netTopoAutoCatch/src/switchboard
+该目录下有个README，记录了具体的实现流程
+这主要是一个网元接入发现子系统的实现，通过交换机的实现原理对arp表进行采集信息对比本地的数据库从而发现新项目。毕业设计论文里有详细的介绍
